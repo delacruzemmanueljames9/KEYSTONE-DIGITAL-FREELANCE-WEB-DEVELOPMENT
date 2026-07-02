@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ems — Structural × Digital</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0F2438;
+    --navy-deep:#0A1826;
+    --grid:#1F3A52;
+    --paper:#F2EDE1;
+    --paper-dim:#E7E0CF;
+    --ink:#161D24;
+    --orange:#FF6B35;
+    --orange-dim:#C9531F;
+    --steel:#7C93A8;
+    --mono:'IBM Plex Mono', monospace;
+    --display:'Space Grotesk', sans-serif;
+    --body:'Inter', sans-serif;
+  }
+
+  *{margin:0;padding:0;box-sizing:border-box;}
+
+  html{scroll-behavior:smooth;}
+
+  body{
+    background:var(--navy);
+    color:var(--paper);
+    font-family:var(--body);
+    overflow-x:hidden;
+    cursor:none;
+  }
+
+  @media (hover:none){
+    body{cursor:auto;}
+    .cursor-dot,.cursor-ring{display:none;}
+  }
+
+  /* ---------- Custom cursor ---------- */
+  .cursor-dot,.cursor-ring{
+    position:fixed;
+    top:0;left:0;
+    pointer-events:none;
+    z-index:9999;
+    border-radius:50%;
+    transform:translate(-50%,-50%);
+  }
+  .cursor-dot{
+    width:6px;height:6px;
+    background:var(--orange);
+    transition:opacity .2s;
+  }
+  .cursor-ring{
+    width:32px;height:32px;
+    border:1px solid var(--orange);
+    transition:width .18s ease, height .18s ease, border-color .18s ease, background .18s ease;
+  }
+  .cursor-ring::before,.cursor-ring::after{
+    content:'';
+    position:absolute;
+    background:var(--orange);
+  }
+  .cursor-ring::before{ top:50%; left:-6px; width:4px; height:1px; transform:translateY(-50%);}
+  .cursor-ring::after{ left:50%; top:-6px; height:4px; width:1px; transform:translateX(-50%);}
+  body.hover-active .cursor-ring{
+    width:56px;height:56px;
+    background:rgba(255,107,53,0.08);
+    border-color:var(--orange);
+  }
+
+  /* ---------- Blueprint grid background ---------- */
+  .grid-bg{
+    position:fixed;
+    inset:0;
+    z-index:0;
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size:40px 40px;
+    opacity:.35;
+    pointer-events:none;
+  }
+  .grid-bg::after{
+    content:'';
+    position:absolute;
+    inset:0;
+    background:radial-gradient(circle at 50% 0%, transparent 0%, var(--navy) 78%);
+  }
+
+  section{
+    position:relative;
+    z-index:1;
+    padding:120px 8vw;
+    max-width:1200px;
+    margin:0 auto;
+  }
+
+  /* ---------- Toolbox nav ---------- */
+  .toolbox{
+    position:fixed;
+    bottom:24px;
+    left:24px;
+    z-index:1000;
+    background:rgba(15,36,56,0.9);
+    border:1px solid var(--grid);
+    backdrop-filter:blur(6px);
+    padding:10px 14px;
+    display:flex;
+    gap:14px;
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.03em;
+    color:var(--steel);
+  }
+  .toolbox span{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    cursor:none;
+    transition:color .2s;
+  }
+  .toolbox span:hover{color:var(--orange);}
+  .toolbox kbd{
+    border:1px solid var(--steel);
+    padding:1px 6px;
+    color:var(--paper);
+    font-size:10px;
+  }
+  .toolbox span:hover kbd{border-color:var(--orange); color:var(--orange);}
+
+  .toast{
+    position:fixed;
+    bottom:70px;
+    left:24px;
+    background:var(--orange);
+    color:var(--navy-deep);
+    font-family:var(--mono);
+    font-size:12px;
+    font-weight:600;
+    padding:8px 14px;
+    z-index:1000;
+    opacity:0;
+    transform:translateY(6px);
+    transition:opacity .25s, transform .25s;
+    pointer-events:none;
+  }
+  .toast.show{opacity:1; transform:translateY(0);}
+
+  /* ---------- Hero / Title block ---------- */
+  .hero{
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    padding-top:100px;
+  }
+  .eyebrow{
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:.15em;
+    color:var(--orange);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    opacity:0;
+    animation:fadeUp .7s .1s forwards;
+  }
+  .eyebrow::before{
+    content:'';
+    width:24px; height:1px;
+    background:var(--orange);
+  }
+  h1{
+    font-family:var(--display);
+    font-weight:700;
+    font-size:clamp(38px, 7vw, 84px);
+    line-height:1.02;
+    margin:18px 0 22px;
+    max-width:900px;
+    opacity:0;
+    animation:fadeUp .8s .25s forwards;
+  }
+  h1 .accent{ color:var(--orange); }
+  .hero p.lede{
+    font-size:18px;
+    color:var(--steel);
+    max-width:520px;
+    line-height:1.6;
+    opacity:0;
+    animation:fadeUp .8s .4s forwards;
+  }
+  .hero-cta{
+    margin-top:34px;
+    display:flex;
+    gap:16px;
+    opacity:0;
+    animation:fadeUp .8s .55s forwards;
+  }
+  .btn{
+    font-family:var(--mono);
+    font-size:13px;
+    letter-spacing:.04em;
+    padding:14px 26px;
+    border:1px solid var(--orange);
+    color:var(--orange);
+    background:transparent;
+    text-decoration:none;
+    display:inline-block;
+    position:relative;
+    transition:color .25s;
+  }
+  .btn::before{
+    content:'';
+    position:absolute;
+    inset:0;
+    background:var(--orange);
+    transform:scaleX(0);
+    transform-origin:left;
+    transition:transform .3s ease;
+    z-index:-1;
+  }
+  .btn:hover{ color:var(--navy-deep); }
+  .btn:hover::before{ transform:scaleX(1); }
+  .btn.ghost{ border-color:var(--steel); color:var(--paper); }
+  .btn.ghost::before{ background:var(--steel); }
+
+  @keyframes fadeUp{
+    from{ opacity:0; transform:translateY(18px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+
+  /* Title block stamp */
+  .title-block{
+    position:absolute;
+    right:8vw;
+    bottom:70px;
+    border:1px solid var(--grid);
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--steel);
+    width:280px;
+    opacity:0;
+    animation:fadeUp .8s .7s forwards;
+  }
+
+  /* ---------- Photo card (3D tilt) ---------- */
+  .photo-wrap{
+    position:absolute;
+    right:8vw;
+    top:110px;
+    width:230px;
+    opacity:0;
+    animation:fadeUp .8s .6s forwards;
+    perspective:900px;
+  }
+  .photo-card{
+    position:relative;
+    transform-style:preserve-3d;
+    transition:transform .15s ease-out;
+    background:var(--paper);
+    padding:10px 10px 34px;
+    box-shadow:
+      0 2px 0 rgba(0,0,0,.4),
+      0 18px 30px -10px rgba(0,0,0,.55),
+      0 40px 60px -25px rgba(0,0,0,.5);
+  }
+  .photo-card img{
+    display:block;
+    width:100%;
+    height:auto;
+    filter:saturate(1.03) contrast(1.02);
+  }
+  .photo-card .corner{
+    position:absolute;
+    width:14px; height:14px;
+    border:2px solid var(--orange);
+    transform:translateZ(20px);
+  }
+  .photo-card .corner.tl{ top:-6px; left:-6px; border-right:none; border-bottom:none; }
+  .photo-card .corner.tr{ top:-6px; right:-6px; border-left:none; border-bottom:none; }
+  .photo-card .corner.bl{ bottom:26px; left:-6px; border-right:none; border-top:none; }
+  .photo-card .corner.br{ bottom:26px; right:-6px; border-left:none; border-top:none; }
+  .photo-card .cap{
+    position:absolute;
+    bottom:8px; left:10px; right:10px;
+    font-family:var(--mono);
+    font-size:10px;
+    letter-spacing:.06em;
+    color:var(--ink);
+    display:flex;
+    justify-content:space-between;
+    transform:translateZ(16px);
+  }
+  .photo-card .cap b{ color:var(--orange-dim); }
+  @media (max-width:900px){ .photo-wrap{ position:static; margin-bottom:36px; width:190px; } }
+  .title-block .row{
+    display:flex;
+    justify-content:space-between;
+    padding:8px 12px;
+    border-bottom:1px solid var(--grid);
+  }
+  .title-block .row:last-child{ border-bottom:none; }
+  .title-block .row b{ color:var(--paper); font-weight:500; }
+  @media (max-width:900px){ .title-block{ position:static; margin-top:50px; width:100%; } }
+
+  /* ---------- Section headers ---------- */
+  .sec-head{
+    display:flex;
+    align-items:baseline;
+    gap:18px;
+    margin-bottom:56px;
+  }
+  .sec-num{
+    font-family:var(--mono);
+    color:var(--orange);
+    font-size:13px;
+  }
+  .sec-title{
+    font-family:var(--display);
+    font-size:clamp(28px,4vw,42px);
+    font-weight:600;
+  }
+  .sec-line{
+    flex:1;
+    height:1px;
+    background:var(--grid);
+  }
+
+  .reveal{
+    opacity:0;
+    transform:translateY(24px);
+    transition:opacity .7s ease, transform .7s ease;
+  }
+  .reveal.in{ opacity:1; transform:translateY(0); }
+
+  /* ---------- About ---------- */
+  .about-grid{
+    display:grid;
+    grid-template-columns:1.1fr .9fr;
+    gap:60px;
+  }
+  .about-grid p{
+    color:var(--steel);
+    line-height:1.75;
+    font-size:16px;
+    margin-bottom:16px;
+  }
+  .about-grid strong{ color:var(--paper); font-weight:600; }
+  .stat-panel{
+    border:1px solid var(--grid);
+    font-family:var(--mono);
+  }
+  .stat-row{
+    display:flex;
+    justify-content:space-between;
+    padding:16px 18px;
+    border-bottom:1px solid var(--grid);
+    font-size:13px;
+  }
+  .stat-row:last-child{ border-bottom:none; }
+  .stat-row span:first-child{ color:var(--steel); }
+  .stat-row span:last-child{ color:var(--orange); }
+  @media (max-width:800px){ .about-grid{ grid-template-columns:1fr; } }
+
+  /* ---------- Toolbox / Skills grid ---------- */
+  .tool-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:1px;
+    background:var(--grid);
+    border:1px solid var(--grid);
+  }
+  .tool-card{
+    background:var(--navy);
+    padding:28px 24px;
+    position:relative;
+    overflow:hidden;
+    transition:background .3s;
+  }
+  .tool-card::before{
+    content:'';
+    position:absolute;
+    top:0; left:0; right:0;
+    height:0;
+    background:linear-gradient(180deg, rgba(255,107,53,.12), transparent);
+    transition:height .35s ease;
+  }
+  .tool-card:hover::before{ height:100%; }
+  .tool-card:hover{ background:#122A40; }
+  .tool-idx{
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--orange);
+    display:block;
+    margin-bottom:14px;
+  }
+  .tool-card h3{
+    font-family:var(--display);
+    font-size:19px;
+    font-weight:600;
+    margin-bottom:10px;
+  }
+  .tool-card p{
+    font-size:13.5px;
+    color:var(--steel);
+    line-height:1.6;
+  }
+
+  /* ---------- Projects ---------- */
+  .proj{
+    border:1px solid var(--grid);
+    margin-bottom:1px;
+    padding:38px 32px;
+    display:grid;
+    grid-template-columns:120px 1fr;
+    gap:30px;
+    position:relative;
+    transition:border-color .3s;
+  }
+  .proj:hover{ border-color:var(--orange); }
+  .proj-sheet{
+    font-family:var(--mono);
+    font-size:12px;
+    color:var(--steel);
+  }
+  .proj-sheet .num{
+    display:block;
+    font-family:var(--display);
+    font-size:34px;
+    color:var(--orange);
+    font-weight:700;
+    margin-bottom:6px;
+  }
+  .proj h3{
+    font-family:var(--display);
+    font-size:24px;
+    margin-bottom:10px;
+  }
+  .proj p{ color:var(--steel); line-height:1.7; margin-bottom:14px; max-width:640px; }
+  .tag-row{ display:flex; gap:8px; flex-wrap:wrap; }
+  .tag{
+    font-family:var(--mono);
+    font-size:11px;
+    border:1px solid var(--grid);
+    color:var(--steel);
+    padding:4px 10px;
+  }
+  @media (max-width:700px){ .proj{ grid-template-columns:1fr; } }
+
+  /* ---------- Contact / footer ---------- */
+  .contact{
+    text-align:center;
+    padding-bottom:160px;
+  }
+  .contact h2{
+    font-family:var(--display);
+    font-size:clamp(30px,5vw,54px);
+    margin-bottom:20px;
+  }
+  .contact p{ color:var(--steel); margin-bottom:34px; }
+  .term{
+    max-width:560px;
+    margin:0 auto 40px;
+    border:1px solid var(--grid);
+    text-align:left;
+    font-family:var(--mono);
+    font-size:13px;
+    background:var(--navy-deep);
+  }
+  .term-bar{
+    display:flex; gap:6px;
+    padding:10px 14px;
+    border-bottom:1px solid var(--grid);
+  }
+  .term-bar span{ width:9px; height:9px; border-radius:50%; background:var(--grid); }
+  .term-body{ padding:18px; color:var(--steel); line-height:1.9; }
+  .term-body .prompt{ color:var(--orange); }
+  .term-body .out{ color:var(--paper); }
+  footer{
+    text-align:center;
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--steel);
+    padding-bottom:40px;
+  }
+</style>
+</head>
+<body>
+
+<div class="grid-bg"></div>
+<div class="cursor-dot"></div>
+<div class="cursor-ring"></div>
+
+<div class="toast" id="toast"></div>
+<nav class="toolbox">
+  <span data-target="#hero"><kbd>1</kbd>Home</span>
+  <span data-target="#about"><kbd>2</kbd>About</span>
+  <span data-target="#projects"><kbd>3</kbd>Work</span>
+  <span data-target="#contact"><kbd>4</kbd>Contact</span>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="hero">
+  <div class="eyebrow">Sheet 01 — Cover</div>
+  <h1>Building <span class="accent">structures</span> — physical and <span class="accent">digital</span>.</h1>
+  <p class="lede">Civil engineering student with a hands-on grip on web development and security testing. I design sites that look right, load fast, and hold up when someone tries to break them.</p>
+  <div class="hero-cta">
+    <a href="#projects" class="btn">View Projects</a>
+    <a href="#contact" class="btn ghost">Get in Touch</a>
+  </div>
+
+  <div class="photo-wrap" id="photoWrap">
+    <div class="photo-card" id="photoCard">
+      <span class="corner tl"></span><span class="corner tr"></span>
+      <span class="corner bl"></span><span class="corner br"></span>
+      <img src="photo.jpg" alt="Ems">
+      <div class="cap"><span>FIG. 01</span><b>EMS</b></div>
+    </div>
+  </div>
+
+  <div class="title-block">
+    <div class="row"><span>Drawn by</span><b>Ems</b></div>
+    <div class="row"><span>Discipline</span><b>Web / Testing</b></div>
+    <div class="row"><span>Scale</span><b>1 : Freelance</b></div>
+    <div class="row"><span>Status</span><b>Available</b></div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="sec-head reveal">
+    <span class="sec-num">Sheet 02</span>
+    <span class="sec-title">About</span>
+    <span class="sec-line"></span>
+  </div>
+  <div class="about-grid">
+    <div class="reveal">
+      <p>I'm an 18-year-old, first-year <strong>BS Civil Engineering</strong> student who spends as much time in dev tools and terminals as in drafting software. That dual grounding shapes how I build — <strong>structurally sound, deliberately tested, and built to hold weight</strong>.</p>
+      <p>Alongside my studies, I carry close to <strong>10 years of leadership experience</strong> — from organizations at the school level up to <strong>community-level councils</strong>, coordinating people, documentation, and projects across multiple groups at once.</p>
+      <p>On the build side, I work with modern no-code and low-code tools alongside light hand-coding — HTML, CSS, and JavaScript — to ship sites that are fast and clean. On the testing side, I bring an <strong>ethical hacking mindset</strong>: checking for the weak points most freelancers never think to look for.</p>
+      <p>I'm entering freelancing to combine both — sites that don't just look good, but are built, led, and checked properly.</p>
+    </div>
+    <div class="stat-panel reveal">
+      <div class="stat-row"><span>Age</span><span>18</span></div>
+      <div class="stat-row"><span>Year Level</span><span>BSCE — 1st Year</span></div>
+      <div class="stat-row"><span>Leadership</span><span>~10 Years, Multi-Org</span></div>
+      <div class="stat-row"><span>Focus</span><span>Web Development</span></div>
+      <div class="stat-row"><span>Tools</span><span>Builders + Light Code</span></div>
+      <div class="stat-row"><span>Based in</span><span>Philippines</span></div>
+      <div class="stat-row"><span>Availability</span><span>Open</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- TOOLBOX / SKILLS -->
+<section id="toolbox">
+  <div class="sec-head reveal">
+    <span class="sec-num">Sheet 03</span>
+    <span class="sec-title">Toolbox</span>
+    <span class="sec-line"></span>
+  </div>
+  <div class="tool-grid reveal">
+    <div class="tool-card">
+      <span class="tool-idx">INST. 01</span>
+      <h3>Site Building</h3>
+      <p>Webflow, WordPress + Elementor, and hand-coded HTML/CSS/JS for lightweight, fast pages.</p>
+    </div>
+    <div class="tool-card">
+      <span class="tool-idx">INST. 02</span>
+      <h3>Responsive Design</h3>
+      <p>Layouts that hold up cleanly from a wide monitor down to a small phone screen.</p>
+    </div>
+    <div class="tool-card">
+      <span class="tool-idx">INST. 03</span>
+      <h3>Security Testing</h3>
+      <p>Basic vulnerability checks and ethical-hacking awareness applied to every build.</p>
+    </div>
+    <div class="tool-card">
+      <span class="tool-idx">INST. 04</span>
+      <h3>Performance</h3>
+      <p>Trimming load times and cleaning up bloat so sites feel instant, not sluggish.</p>
+    </div>
+  </div>
+</section>
+
+<!-- PROJECTS -->
+<section id="projects">
+  <div class="sec-head reveal">
+    <span class="sec-num">Sheet 04</span>
+    <span class="sec-title">Selected Work</span>
+    <span class="sec-line"></span>
+  </div>
+
+  <div class="proj reveal">
+    <div class="proj-sheet"><span class="num">01</span>Landing Page</div>
+    <div>
+      <h3>Local Business Redesign</h3>
+      <p>A before/after concept redesign for a small local business — cleaning up navigation, adding a clear call-to-action, and making the whole page mobile-friendly.</p>
+      <div class="tag-row"><span class="tag">HTML/CSS</span><span class="tag">Responsive</span><span class="tag">UI Cleanup</span></div>
+    </div>
+  </div>
+
+  <div class="proj reveal">
+    <div class="proj-sheet"><span class="num">02</span>Portfolio Site</div>
+    <div>
+      <h3>Personal Brand Page</h3>
+      <p>A single-page portfolio concept for a creative freelancer, built to show off work samples with fast load times and a simple contact flow.</p>
+      <div class="tag-row"><span class="tag">Single-file</span><span class="tag">Animation</span><span class="tag">GitHub Pages</span></div>
+    </div>
+  </div>
+
+  <div class="proj reveal">
+    <div class="proj-sheet"><span class="num">03</span>Security Pass</div>
+    <div>
+      <h3>Site Vulnerability Check</h3>
+      <p>A basic security review process — checking forms, links, and common weak points before a client site goes live.</p>
+      <div class="tag-row"><span class="tag">Testing</span><span class="tag">Checklist</span><span class="tag">Reporting</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact" class="contact">
+  <div class="sec-head reveal" style="justify-content:center;">
+    <span class="sec-num">Sheet 05</span>
+    <span class="sec-title">Contact</span>
+    <span class="sec-line"></span>
+  </div>
+  <h2 class="reveal">Let's build something.</h2>
+  <p class="reveal">Open for freelance web projects — small business sites, landing pages, and portfolio builds.</p>
+  <div class="term reveal">
+    <div class="term-bar"><span></span><span></span><span></span></div>
+    <div class="term-body">
+      <div><span class="prompt">$</span> contact --email</div>
+      <!-- REPLACE_EMAIL: put your email here, in both the line below AND the mailto: link on the button -->
+      <div class="out">PUT-YOUR-EMAIL-HERE@example.com</div>
+      <div><span class="prompt">$</span> contact --phone</div>
+      <div class="out">0910 623 0737</div>
+      <div><span class="prompt">$</span> contact --socials</div>
+      <div class="out">facebook.com/yourprofile</div>
+    </div>
+  </div>
+  <a href="mailto:PUT-YOUR-EMAIL-HERE@example.com" class="btn reveal">Send an Email</a>
+</section>
+
+<footer>© 2026 Ems — Drafted &amp; deployed on GitHub Pages</footer>
+
+<script>
+  // Custom cursor
+  const dot = document.querySelector('.cursor-dot');
+  const ring = document.querySelector('.cursor-ring');
+  let mx=0,my=0, rx=0, ry=0;
+  window.addEventListener('mousemove', e=>{
+    mx=e.clientX; my=e.clientY;
+    dot.style.left=mx+'px'; dot.style.top=my+'px';
+  });
+  function loop(){
+    rx += (mx-rx)*0.18; ry += (my-ry)*0.18;
+    ring.style.left=rx+'px'; ring.style.top=ry+'px';
+    requestAnimationFrame(loop);
+  }
+  loop();
+  document.querySelectorAll('a, .tool-card, .proj, .toolbox span').forEach(el=>{
+    el.addEventListener('mouseenter', ()=>document.body.classList.add('hover-active'));
+    el.addEventListener('mouseleave', ()=>document.body.classList.remove('hover-active'));
+  });
+
+  // 3D tilt on photo card (mouse-tracked, deeper on the corner markers via translateZ)
+  const photoWrap = document.getElementById('photoWrap');
+  const photoCard = document.getElementById('photoCard');
+  if (photoWrap && photoCard) {
+    photoWrap.addEventListener('mousemove', (e) => {
+      const r = photoWrap.getBoundingClientRect();
+      const px = (e.clientX - r.left) / r.width - 0.5;
+      const py = (e.clientY - r.top) / r.height - 0.5;
+      photoCard.style.transform = `rotateY(${px * 16}deg) rotateX(${-py * 16}deg) translateZ(10px)`;
+    });
+    photoWrap.addEventListener('mouseleave', () => {
+      photoCard.style.transform = 'rotateY(0deg) rotateX(0deg) translateZ(0px)';
+    });
+  }
+
+  // Scroll reveal
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(en=>{ if(en.isIntersecting) en.target.classList.add('in'); });
+  }, {threshold:0.15});
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+  // Toolbox nav clicks
+  document.querySelectorAll('.toolbox span').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      document.querySelector(el.dataset.target).scrollIntoView({behavior:'smooth'});
+    });
+  });
+
+  // Keyboard shortcuts
+  const toast = document.getElementById('toast');
+  const map = {'1':'#hero','2':'#about','3':'#projects','4':'#contact'};
+  let toastTimer;
+  window.addEventListener('keydown', e=>{
+    if(map[e.key]){
+      document.querySelector(map[e.key]).scrollIntoView({behavior:'smooth'});
+      toast.textContent = 'JUMP → ' + map[e.key].replace('#','').toUpperCase();
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(()=>toast.classList.remove('show'), 1200);
+    }
+  });
+
+  // Reduced motion respect
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    document.querySelectorAll('.reveal').forEach(el=>el.classList.add('in'));
+    document.documentElement.style.scrollBehavior = 'auto';
+  }
+</script>
+</body>
+</html>
